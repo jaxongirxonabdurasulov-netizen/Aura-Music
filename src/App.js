@@ -10,7 +10,6 @@ function App() {
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [query, setQuery] = useState("uzbek");
   const [liked, setLiked] = useState([]);
   const [tab, setTab] = useState("all");
   const [progress, setProgress] = useState(0);
@@ -42,7 +41,6 @@ function App() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (search.trim()) {
-      setQuery(search);
       fetchTracks(search);
       setTab("all");
     }
@@ -141,7 +139,7 @@ function App() {
       <div className="container">
         {/* Header */}
         <div className="header">
-          <h1>🔮 Aura Music</h1>
+          <h1>🎵 Musiqam</h1>
           <span className="badge">Deezer</span>
         </div>
 
@@ -239,5 +237,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
