@@ -139,7 +139,7 @@ function App() {
       <div className="container">
         {/* Header */}
         <div className="header">
-          <h1>🎵 Musiqam</h1>
+          <h1>🎵 Aura Music</h1>
           <span className="badge">Deezer</span>
         </div>
 
