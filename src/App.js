@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import "./App.css";
 
-const DEEZER_API = "https://api.deezer.com";
-const CORS = "https://corsproxy.io/?";
+const SEARCH_API = "/api/search";
 
 function App() {
   const [tracks, setTracks] = useState([]);
@@ -29,7 +28,7 @@ function App() {
   const fetchTracks = async (q) => {
     setLoading(true);
     try {
-      const res = await fetch(`${CORS}${DEEZER_API}/search?q=${encodeURIComponent(q)}&limit=25`);
+      const res = await fetch(`${SEARCH_API}?q=${encodeURIComponent(q)}`);
       const data = await res.json();
       setTracks(data.data || []);
     } catch (e) {
@@ -139,7 +138,7 @@ function App() {
       <div className="container">
         {/* Header */}
         <div className="header">
-          <h1>🎵 Aura Music</h1>
+          <h1>🔮 Aura Music</h1>
           <span className="badge">Deezer</span>
         </div>
 
@@ -237,4 +236,5 @@ function App() {
     </div>
   );
 }
+
 export default App;
