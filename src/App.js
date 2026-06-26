@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import "./App.css";
 
-const SEARCH_API = "/api/search";
-
 function App() {
   const [tracks, setTracks] = useState([]);
   const [current, setCurrent] = useState(null);
@@ -11,26 +9,24 @@ function App() {
   const [search, setSearch] = useState("");
   const [liked, setLiked] = useState([]);
   const [tab, setTab] = useState("all");
-  const [progress, setProgress] = useState(0);
-  const [volume, setVolume] = useState(0.8);
-  const audioRef = useRef(null);
 
   useEffect(() => {
-    fetchTracks("uzbek");
+    fetchTracks("uzbek music");
   }, []);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-  }, [volume]);
 
   const fetchTracks = async (q) => {
     setLoading(true);
     try {
-      const res = await fetch(`${SEARCH_API}?q=${encodeURIComponent(q)}`);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
       const data = await res.json();
-      setTracks(data.data || []);
+      const items = (data.items || []).map((item) => ({
+        id: item.id.videoId,
+        title: item.snippet.title,
+        artist: item.snippet.channelTitle,
+        cover: item.snippet.thumbnails?.medium?.url,
+        videoId: item.id.videoId,
+      }));
+      setTracks(items);
     } catch (e) {
       console.error(e);
     }
@@ -47,29 +43,11 @@ function App() {
 
   const selectTrack = (track) => {
     if (current?.id === track.id) {
-      togglePlay();
+      setPlaying(!playing);
       return;
     }
     setCurrent(track);
-    setProgress(0);
     setPlaying(true);
-    setTimeout(() => {
-      if (audioRef.current) {
-        audioRef.current.src = track.preview;
-        audioRef.current.play();
-      }
-    }, 100);
-  };
-
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (playing) {
-      audioRef.current.pause();
-      setPlaying(false);
-    } else {
-      audioRef.current.play();
-      setPlaying(true);
-    }
   };
 
   const nextTrack = () => {
@@ -93,31 +71,6 @@ function App() {
     );
   };
 
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      const pct = (audioRef.current.currentTime / audioRef.current.duration) * 100;
-      setProgress(pct || 0);
-    }
-  };
-
-  const handleSeek = (e) => {
-    if (!audioRef.current) return;
-    const bar = e.currentTarget;
-    const pct = e.nativeEvent.offsetX / bar.offsetWidth;
-    audioRef.current.currentTime = pct * audioRef.current.duration;
-  };
-
-  const handleEnded = () => {
-    nextTrack();
-  };
-
-  const fmt = (s) => {
-    if (!s) return "0:00";
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec < 10 ? "0" : ""}${sec}`;
-  };
-
   const visibleTracks = () => {
     if (tab === "liked") return tracks.filter((t) => liked.includes(t.id));
     return tracks;
@@ -127,19 +80,11 @@ function App() {
 
   return (
     <div className="app">
-      <audio
-        ref={audioRef}
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={handleEnded}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-      />
-
       <div className="container">
         {/* Header */}
         <div className="header">
           <h1>🔮 Aura Music</h1>
-          <span className="badge">Deezer</span>
+          <span className="badge">YouTube</span>
         </div>
 
         {/* Search */}
@@ -164,7 +109,6 @@ function App() {
           </button>
         </div>
 
-        {/* Loading */}
         {loading && <div className="loading">⏳ Yuklanmoqda...</div>}
 
         {/* Track List */}
@@ -181,16 +125,11 @@ function App() {
               <span className="track-num">
                 {current?.id === track.id && playing ? "▶" : i + 1}
               </span>
-              <img
-                className="track-cover"
-                src={track.album?.cover_small}
-                alt={track.title}
-              />
+              <img className="track-cover" src={track.cover} alt={track.title} />
               <div className="track-info">
                 <div className="track-name">{track.title}</div>
-                <div className="track-artist">{track.artist?.name}</div>
+                <div className="track-artist">{track.artist}</div>
               </div>
-              <span className="track-dur">{fmt(track.duration)}</span>
               <button
                 className={`like-btn ${liked.includes(track.id) ? "liked" : ""}`}
                 onClick={(e) => toggleLike(track.id, e)}
@@ -201,34 +140,31 @@ function App() {
           ))}
         </div>
 
-        {/* Player */}
+        {/* YouTube Player */}
         {current && (
           <div className="player">
-            <img className="player-cover" src={current.album?.cover_small} alt={current.title} />
-            <div className="player-middle">
-              <div className="player-meta">
+            <div className="youtube-wrap">
+              <iframe
+                key={current.videoId}
+                width="100%"
+                height="80"
+                src={`https://www.youtube.com/embed/${current.videoId}?autoplay=${playing ? 1 : 0}&controls=1`}
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+                title={current.title}
+                style={{ border: "none", borderRadius: "10px" }}
+              />
+            </div>
+            <div className="player-info">
+              <img className="player-cover" src={current.cover} alt={current.title} />
+              <div>
                 <div className="player-name">{current.title}</div>
-                <div className="player-artist">{current.artist?.name}</div>
-              </div>
-              <div className="progress-bar" onClick={handleSeek}>
-                <div className="progress-fill" style={{ width: `${progress}%` }} />
-              </div>
-              <div className="controls">
-                <button className="ctrl" onClick={prevTrack}>⏮</button>
-                <button className="play-btn" onClick={togglePlay}>
-                  {playing ? "⏸" : "▶️"}
-                </button>
-                <button className="ctrl" onClick={nextTrack}>⏭</button>
+                <div className="player-artist">{current.artist}</div>
               </div>
             </div>
-            <div className="volume-wrap">
-              🔊
-              <input
-                type="range" min="0" max="1" step="0.01"
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="volume"
-              />
+            <div className="controls">
+              <button className="ctrl" onClick={prevTrack}>⏮</button>
+              <button className="ctrl" onClick={nextTrack}>⏭</button>
             </div>
           </div>
         )}
