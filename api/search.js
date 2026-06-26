@@ -6,8 +6,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    const API_KEY = process.env.YOUTUBE_API_KEY;
     const response = await fetch(
-      `https://api.deezer.com/search?q=${encodeURIComponent(q)}&limit=25`
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&q=${encodeURIComponent(q)}&maxResults=25&key=${API_KEY}`
     );
     const data = await response.json();
 
